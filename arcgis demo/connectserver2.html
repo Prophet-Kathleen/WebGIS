@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>尝试连接到服务器版本2</title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+          padding: 0;
+          margin: 0;
+          height: 100%;
+          width: 100%;
+        }
+         </style>
+    <link rel="stylesheet" href="./4.23/esri/themes/dark-red/main.css" />
+    <script src="./4.23/init.js"></script>
+    <script>
+        require([
+            "esri/Basemap",//basemap现在不用自定义底图
+            "esri/layers/FeatureLayer",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/widgets/Compass",//指南针
+            "esri/widgets/ScaleBar",//比例尺
+            "esri/widgets/Measurement",//测量用具
+            ], 
+            function(Basemap,FeatureLayer,Map, MapView,Compass,ScaleBar,Measurement){
+
+                const layer0 = new FeatureLayer({
+                    url:"http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/0"
+                })
+
+                const layer1 = new FeatureLayer({
+                    url:"http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/1"
+                })
+
+                const layer2 = new FeatureLayer({
+                    url:"http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                })
+
+                const layer3 = new FeatureLayer({
+                    url:"http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/3",
+                });
+
+                const mymap = new Map({
+                    basemap:"satellite",
+                });
+                
+                //featurelayer添加到当前底图
+                mymap.add(layer0);
+                mymap.add(layer1);
+                mymap.add(layer2);
+                mymap.add(layer3);
+
+
+                const view = new MapView({
+                    map:mymap,
+                    container:"viewDiv",
+                    zoom: 13, // Zoom level
+                    center:[117.175, 30.497],
+                    
+                });
+
+                const deafult_compass = new Compass({
+                    view:view,
+                });
+
+                const deafult_scale = new ScaleBar({
+                    view:view,
+                    unit:"metric",//设置公制
+                })
+                
+                const deafult_measurement = new Measurement({
+                    view:view,
+                    activeTool:"distance"
+                });
+
+                view.ui.add(deafult_compass,"top-left")
+                view.ui.add(deafult_scale,{
+                    position:"bottom-right"
+                });
+
+                //在面积计算和距离计算中切换
+                function measurement_switchtool(){
+                    const tool = deafult_measurement.activeTool == "distance"?"area":"distance";
+                    deafult_measurement.activeTool = tool;
+                }
+
+                view.ui.add(deafult_measurement,"bottom-left");
+
+                
+            })
+                
+            
+    </script>
+</head>
+<body>
+    <div id="viewDiv">
+        
+    </div>
+</body>
+</html>

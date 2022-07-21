@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基础功能实现</title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #toolbarDiv {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: default;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+
+        .esri-widget--button.active,
+        .esri-widget--button.active:hover,
+        .esri-widget--button.active:focus {
+            cursor: default;
+            background-color: #999696;
+        }
+
+        .esri-widget--button.active path,
+        .esri-widget--button.active:hover path,
+        .esri-widget--button.active:focus path {
+            fill: #E4E4E4;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/dark/main.css" />
+    <!--导入官方css文件-->
+    <script src="https://js.arcgis.com/4.23"></script>
+    <!--导入官方的js文件-->
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <!--导入jquery官方js文件-->
+
+    <script>
+        require([
+            "esri/layers/FeatureLayer",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/widgets/Compass",//指南针
+            "esri/widgets/ScaleBar",//比例尺
+            "esri/widgets/Measurement",//测量用具
+            "esri/widgets/Legend",//图例
+            "esri/widgets/Popup",//设置弹出窗口
+            "esri/rest/support/Query",//查询功能
+            "esri/tasks/QueryTask"
+        ],
+            function (FeatureLayer, Map, MapView, Compass, ScaleBar, Measurement, Legend, Popup, Query, QueryTask) {
+                //导入图层
+                const layer0 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/0"
+                })
+                const layer1 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/1"
+                })
+                const layer2 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                })
+                const layer3 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/3",
+                });
+
+                //设置底图为satellite
+                const mymap = new Map({
+                    basemap: "satellite",
+                });
+
+                //featurelayer添加到当前底图
+                mymap.add(layer1);
+                mymap.add(layer2);
+                mymap.add(layer3);
+
+                //设置mapview
+                const view = new MapView({
+                    map: mymap,
+                    container: "viewDiv",
+                    zoom: 13, // 缩放级别
+                    center: [117.175, 30.497],
+                    popup: {
+                        defaultPopupTemplateEnabled: true,
+                    }
+                });
+
+                //创建一个指南针
+                const default_compass = new Compass({
+                    view: view,
+                });
+
+                //创建一个刻度尺
+                const default_scale = new ScaleBar({
+                    view: view,
+                    unit: "metric",//设置公制
+                });
+
+                //创建图例添加到view中
+                const legend = new Legend({
+                    view: view,
+                    layerInfos: [
+                        {
+                            layer: layer2,//图例使用layer2
+                            title: "南木村土地图例"
+                        }
+                    ],
+                    visible: true,//可以设置图例是否可见的属性
+                });
+
+                //把上面的三种文件添加到view视图中
+                view.ui.add(default_compass, "top-left")
+                view.ui.add(default_scale, {
+                    position: "bottom-right"
+                });
+                view.ui.add(legend, "bottom-left");
+
+                //创建三个测量功能按键
+                const $distancebutton = jQuery('#distance')
+                const $areabutton = jQuery('#area')
+                const $clearbutton = jQuery('#clear')
+
+                //用jquery设置点击distance按钮运行下面的函数
+                jQuery(function () {
+                    jQuery('#distance').click(function () {
+                        alert('距离测量按钮被点击')
+                        if ($distancebutton != null) {
+                            alert('距离测量按钮被定位')
+                        }
+                        //jquery获取到的对象转化为dom对象
+                        const distancebutton = $distancebutton[0]
+                        //设置按钮要做的内容
+                        const measurement_distance = new Measurement({
+                            view: view,
+                            activeTool: "distance",
+                        });
+                        measurement_distance.activeTool = 'distance'
+                        distancebutton.classList.add('activate')
+                    })
+                });
+
+                //用jquery设置点击area按钮运行下面的函数
+                jQuery(function () {
+                    jQuery('#area').click(function () {
+                        alert('面积测量按钮被点击')
+                        if ($areabutton != null) {
+                            alert('面积测量按钮被定位')
+                        }
+                        //转化为dom对象
+                        const areabutton = $areabutton[0]
+                        //设置按钮动作
+                        const measurement_area = new Measurement({
+                            view: view,
+                            activeTool: "area",
+                        })
+                        measurement_area.activeTool = 'area'
+                        areabutton.classList.add('activate')
+                    })
+                });
+
+                //设置删除按钮功能
+                jQuery(function () {
+                    jQuery('#clear').click(function () {
+                        alert('清除按钮被点击')
+                        if ($clearbutton != null) {
+                            alert('清除按钮被定位')
+                        }
+                        //用刷新当前页面作为删除选项
+                        window.location.reload();
+                    });
+
+                });
+
+                //查询地块名称
+                const querylayerurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                const querytask = new QueryTask({
+                    url: querylayerurl,
+                })
+
+                const query = new Query();
+                query.where = "DLMC = '乔木林地'"//属性查询
+                querytask.execute(query).then(function (results) {
+                    console.log(results.features)
+                })
+                querytask.executeForCount(query).then(function (results) {
+                    console.log(results);
+                })
+            })
+
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv">
+    </div>
+    <div id="toolbarDiv" class="esri-component esri-widget">
+        <button id="distance" class="esri-widget--button esri-interactive esri-icon-measure-line"
+            title="距离测量工具"></button>
+        <button id="area" class="esri-widget--button esri-interactive esri-icon-measure-area" title="面积测量工具"></button>
+        <button id="clear" class="esri-widget--button esri-interactive esri-icon-trash" title="清除当前测量"></button>
+    </div>
+    <div>
+
+    </div>
+</body>
+
+</html>

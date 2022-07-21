@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>尝试连接到服务器</title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+          padding: 0;
+          margin: 0;
+          height: 100%;
+          width: 100%;
+        }
+         </style>
+    <link rel="stylesheet" href="./4.23/esri/themes/dark-red/main.css" />
+    <script src="./4.23/init.js"></script>
+    <script>
+        require([
+            "esri/Basemap",
+            "esri/layers/MapImageLayer",
+            "esri/Map",
+            "esri/views/MapView",
+            ], 
+            function(Basemap,MapImageLayer,Map, MapView){
+                
+                const layer = new MapImageLayer({
+                    url:"http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer",
+                });
+
+                const customBasemap = new Basemap({
+                    baseLayers:[layer],
+                    title:"my basemap",
+                });
+
+                const mymap = new Map({
+                    basemap:customBasemap,
+
+                });
+
+
+                const view = new MapView({
+                    map:mymap,
+                    container:"viewDiv",
+                    
+                });
+
+                
+            })
+                
+            
+    </script>
+</head>
+<body>
+    <div id="viewDiv">
+        
+    </div>
+</body>
+</html>

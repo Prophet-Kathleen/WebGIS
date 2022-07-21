@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自定义底图样式</title>
+    <style>
+        html,
+        body,
+        #viewDiv {
+          padding: 0;
+          margin: 0;
+          height: 100%;
+          width: 100%;
+        }
+      </style>
+      <link rel="stylesheet" href="./4.23/esri/themes/dark-red/main.css" />
+      <script src="4.23/init.js"></script>
+</head>
+<script>
+    require(
+        [
+            "esri/config",
+            "esri/Map",
+            "esri/view/MapView",
+
+            "esri/Basemap",
+            "esri/layers/VectorTileLayer",
+            "esri/layers/TileLayer"
+        ],function(esriConfig,Map, MapView, Basemap, VectorTileLayer, TileLayer){
+            
+            //添加arcgis online的key
+            esriConfig.apiKey="test key";
+
+            //创建矢量切片层，下面这个是图像的编号
+            const vectorTileLayer = new VectorTileLayer({
+                portalItem: {
+                    id: "6976148c11bd497d8624206f9ee03e30" // Forest and Parks Canvas
+                },
+                opacity: .75
+            });
+            
+            //创建图像切片层
+            const imageTileLayer = new TileLayer({
+                portalItem: {
+                    id: "1b243539f4514b6ba35e7d995890db1d" // World Hillshade
+                }
+            });
+            
+            //添加底图图层
+            const basemap = new Basemap({
+                baseLayers:[
+                    imageTileLayer,
+                    vectorTileLayer
+                ]
+            });
+
+            //更新basemap
+            const map = new Map({
+                basemap:basemap,
+            })
+
+            //更新地图视图
+            const view = new MapView({
+                container:"viewDiv",
+                map:map,
+                center:[-100,40],
+                zoom:3
+            });
+        }
+
+    )
+</script>
+<body id="viewDiv">
+    
+</body>
+</html>
