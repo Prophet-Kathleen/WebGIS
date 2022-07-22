@@ -78,7 +78,7 @@
             "esri/geometry/Point"
         ],
             function (FeatureLayer, Map, MapView, Compass, ScaleBar, Measurement,
-                Legend, Popup, PopupTemplate,Query, QueryTask, dom, on, domReady, Point) {
+                Legend, Popup, PopupTemplate, Query, QueryTask, dom, on, domReady, Point) {
                 //导入图层
                 const layer0 = new FeatureLayer({
                     url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/0"
@@ -202,7 +202,7 @@
 
 
                 //查询功能可以控制台可实现版本
-                const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                /* const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
                 var queryTask = new QueryTask({
                     url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
                 })
@@ -213,13 +213,24 @@
                 query.where = "DLMC = '河流水面'";
                 
                 queryTask.execute(query).then(
-                    getResults
-                    /* function (results) {
+                    //getResults
+                    function (results) {
                     console.log(results.features);
-                } */);
+                });
 
                 function getResults(response){
-                    /* const pointresults = response.features.map(function (feature) { 
+                     feature.popupTemplate = popupTemplate;
+                     return feature;
+                }
+                
+                queryTask.executeForCount(query).then(function (results) {
+                    console.log(results);
+                    return;
+                }); */
+
+
+                //查询功能版本1
+                /* const pointresults = response.features.map(function (feature) { 
                         feature.symbol = {
                             type:"simple-marker",
                             style:"square",
@@ -227,16 +238,7 @@
                             size:"10px"
                         }
                      }); */
-                     feature.popupTemplate = popupTemplate;
-                     return feature
-                }
-                
-                queryTask.executeForCount(query).then(function (results) {
-                    console.log(results);
-                });
 
-
-                //查询功能版本1
                 /* const $searchbutton = jQuery('#doButton')
                 jQuery(function () {
                     jQuery('#doButton').click(function () {
@@ -275,7 +277,7 @@
                 }) */
 
                 //查询功能版本2
-                /* const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
                 const popuptemplate = {
                     title: "{DLMC}"
                 }
@@ -291,26 +293,21 @@
 
                 function doQuery() {
                     params.where = searchstart.value
-                    qtask.execute(searchurl,params)
-                        .then(getResults)
-                        .otherwise(promisrejected)
+                    qtask.execute(params)
+                        .then(function (results) {
+                            console.log("success");
+                            console.log(results.features);
+                        }, function (error) {
+                            console.log("error");
+
+                        });
+                    //.otherwise(promisrejected)
                 }
 
-                function getResults(response) {
-                    console.log("success")
-                    console.log(result.feature)
-                    return;
-                }
-
-                function promisrejected(err) {
-                    console.log("error")
-                    return;
-                }
-
-                on(dom.byId("doButton"), "click", doQuery) */
 
 
-                //
+                on(dom.byId("doButton"), "click", doQuery)
+
             })
 
 
@@ -327,11 +324,11 @@
         <button id="clear" class="esri-widget--button esri-interactive esri-icon-trash" title="清除当前测量"></button>
     </div>
     <div id="optionsDiv">
-        <h2>查询功能</h2>
+        <h2>search</h2>
         <input type="text" id="search-content">
         <br>
         <br>
-        <button id="doButton">查询</button>
+        <button id="doButton">search</button>
         <br>
         <p><span id="printResults"></span></p>
     </div>
