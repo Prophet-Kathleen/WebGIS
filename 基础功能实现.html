@@ -69,6 +69,7 @@
             "esri/widgets/Measurement",//测量用具
             "esri/widgets/Legend",//图例
             "esri/widgets/Popup",//设置弹出窗口
+            "esri/PopupTemplate",
             "esri/rest/support/Query",//查询功能
             "esri/tasks/QueryTask",
             "dojo/dom",
@@ -77,7 +78,7 @@
             "esri/geometry/Point"
         ],
             function (FeatureLayer, Map, MapView, Compass, ScaleBar, Measurement,
-                Legend, Popup, Query, QueryTask, dom, on, domReady, Point) {
+                Legend, Popup, PopupTemplate,Query, QueryTask, dom, on, domReady, Point) {
                 //导入图层
                 const layer0 = new FeatureLayer({
                     url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/0"
@@ -201,22 +202,38 @@
 
 
                 //查询功能可以控制台可实现版本
-                /* var queryTask = new QueryTask({
+                const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                var queryTask = new QueryTask({
                     url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
                 })
                 var query = new Query();
                 query.returnGeometry = true;
                 query.outFields = ["*"];
-                query.where = "DLMC = '乔木林地'";
-                // When resolved, returns features and graphics that satisfy the query.
-                queryTask.execute(query).then(function (results) {
+                
+                query.where = "DLMC = '河流水面'";
+                
+                queryTask.execute(query).then(
+                    getResults
+                    /* function (results) {
                     console.log(results.features);
-                });
+                } */);
 
-                // When resolved, returns a count of the features that satisfy the query.
+                function getResults(response){
+                    /* const pointresults = response.features.map(function (feature) { 
+                        feature.symbol = {
+                            type:"simple-marker",
+                            style:"square",
+                            color:[225,120,40],
+                            size:"10px"
+                        }
+                     }); */
+                     feature.popupTemplate = popupTemplate;
+                     return feature
+                }
+                
                 queryTask.executeForCount(query).then(function (results) {
                     console.log(results);
-                }); */
+                });
 
 
                 //查询功能版本1
@@ -258,7 +275,7 @@
                 }) */
 
                 //查询功能版本2
-                const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                /* const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
                 const popuptemplate = {
                     title: "{DLMC}"
                 }
@@ -271,24 +288,29 @@
                 })
 
                 const searchstart = dom.byId("search-content")
-                
 
                 function doQuery() {
                     params.where = searchstart.value
-                    qtask.execute(params)
+                    qtask.execute(searchurl,params)
                         .then(getResults)
                         .otherwise(promisrejected)
                 }
 
                 function getResults(response) {
                     console.log("success")
+                    console.log(result.feature)
+                    return;
                 }
 
                 function promisrejected(err) {
                     console.log("error")
+                    return;
                 }
 
-                on(dom.byId("doButton"), "click", doQuery)
+                on(dom.byId("doButton"), "click", doQuery) */
+
+
+                //
             })
 
 
