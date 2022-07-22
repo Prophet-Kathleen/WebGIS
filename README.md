@@ -4,8 +4,9 @@
 ## 使用说明
 当前项目仍然在开发中
 
-## 需要解决的问题
-query，QueryTask，Query，Search Widget
-
-query是featurelayer类中的一个属性，目前查找需要用Query
-
+## 目前实现的功能
+1.地图展示
+2.指南针
+3.放大缩小
+4.图例
+5.测量工具（距离测量和面基测量）
