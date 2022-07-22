@@ -26,6 +26,18 @@
             flex-wrap: nowrap;
         }
 
+        #optionsDiv {
+            background-color: dimgray;
+            color: white;
+            z-index: 23;
+            position: absolute;
+            top: 60px;
+            right: 0px;
+            padding: 0px 0px 0px 10px;
+            border-bottom-left-radius: 5px;
+            max-width: 400px;
+        }
+
         .esri-widget--button.active,
         .esri-widget--button.active:hover,
         .esri-widget--button.active:focus {
@@ -58,9 +70,14 @@
             "esri/widgets/Legend",//图例
             "esri/widgets/Popup",//设置弹出窗口
             "esri/rest/support/Query",//查询功能
-            "esri/tasks/QueryTask"
+            "esri/tasks/QueryTask",
+            "dojo/dom",
+            "dojo/on",
+            "dojo/domReady",
+            "esri/geometry/Point"
         ],
-            function (FeatureLayer, Map, MapView, Compass, ScaleBar, Measurement, Legend, Popup, Query, QueryTask) {
+            function (FeatureLayer, Map, MapView, Compass, ScaleBar, Measurement,
+                Legend, Popup, Query, QueryTask, dom, on, domReady, Point) {
                 //导入图层
                 const layer0 = new FeatureLayer({
                     url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/0"
@@ -182,21 +199,98 @@
 
                 });
 
-                //查询地块名称
-                const querylayerurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
-                const querytask = new QueryTask({
-                    url: querylayerurl,
+
+                //查询功能可以控制台可实现版本
+                /* var queryTask = new QueryTask({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                })
+                var query = new Query();
+                query.returnGeometry = true;
+                query.outFields = ["*"];
+                query.where = "DLMC = '乔木林地'";
+                // When resolved, returns features and graphics that satisfy the query.
+                queryTask.execute(query).then(function (results) {
+                    console.log(results.features);
+                });
+
+                // When resolved, returns a count of the features that satisfy the query.
+                queryTask.executeForCount(query).then(function (results) {
+                    console.log(results);
+                }); */
+
+
+                //查询功能版本1
+                /* const $searchbutton = jQuery('#doButton')
+                jQuery(function () {
+                    jQuery('#doButton').click(function () {
+                        alert('查询按钮被点击');
+                        if ($searchbutton != null) {
+                            alert('查询按钮被定位')
+                        }
+                        const searchtext = jQuery('#search-content').val()
+                        const sqlsearchtext = "DLMC = " + searchtext
+                        console.log("查询内容是" + searchtext)
+                        console.log('sql查询语句是' + sqlsearchtext)
+
+                        const query = new Query();
+                        const querylayerurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                        const querytask = new QueryTask({
+                            url: querylayerurl,
+                        })
+                        const params = new Query({
+                            returnGeometry:true,
+                            outFields:["*"]
+                        })
+
+                        params.where = sqlsearchtext
+                        querytask.execute(params)
+                            .then(getresults)
+                            .otherwise(PromiseRejected)
+                        
+                        function getresults(response){ 
+                            console.log(result.features);
+                         }
+
+                        function PromiseRejected(err){
+                            console.log("promise rejected:");
+                        }
+                    })
+                }) */
+
+                //查询功能版本2
+                const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                const popuptemplate = {
+                    title: "{DLMC}"
+                }
+                const qtask = new QueryTask({
+                    url: searchurl
+                })
+                const params = new Query({
+                    returnGeometry: true,
+                    outFields: ["*"]
                 })
 
-                const query = new Query();
-                query.where = "DLMC = '乔木林地'"//属性查询
-                querytask.execute(query).then(function (results) {
-                    console.log(results.features)
-                })
-                querytask.executeForCount(query).then(function (results) {
-                    console.log(results);
-                })
+                const searchstart = dom.byId("search-content")
+                
+
+                function doQuery() {
+                    params.where = searchstart.value
+                    qtask.execute(params)
+                        .then(getResults)
+                        .otherwise(promisrejected)
+                }
+
+                function getResults(response) {
+                    console.log("success")
+                }
+
+                function promisrejected(err) {
+                    console.log("error")
+                }
+
+                on(dom.byId("doButton"), "click", doQuery)
             })
+
 
     </script>
 </head>
@@ -210,8 +304,14 @@
         <button id="area" class="esri-widget--button esri-interactive esri-icon-measure-area" title="面积测量工具"></button>
         <button id="clear" class="esri-widget--button esri-interactive esri-icon-trash" title="清除当前测量"></button>
     </div>
-    <div>
-
+    <div id="optionsDiv">
+        <h2>查询功能</h2>
+        <input type="text" id="search-content">
+        <br>
+        <br>
+        <button id="doButton">查询</button>
+        <br>
+        <p><span id="printResults"></span></p>
     </div>
 </body>
 
