@@ -1,0 +1,347 @@
+<!-- 功能备份用 -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基础功能实现</title>
+    
+    <style>
+        html,
+        body,
+        #viewDiv {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #toolbarDiv {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: default;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+
+        #optionsDiv {
+            background-color: rgb(111, 111, 111);
+            color: white;
+            z-index: 23;
+            position: absolute;
+            bottom: 60px;
+            right: 0px;
+            padding: 0px 0px 0px 10px;
+            border-bottom-left-radius: 5px;
+            max-width: 300px;
+        }
+
+        .esri-widget--button.active,
+        .esri-widget--button.active:hover,
+        .esri-widget--button.active:focus {
+            cursor: default;
+            background-color: #999696;
+        }
+
+        .esri-widget--button.active path,
+        .esri-widget--button.active:hover path,
+        .esri-widget--button.active:focus path {
+            fill: #E4E4E4;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.2.5/css/calcite-web.min.css">
+    <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/dark/main.css" />
+    <!--导入官方css文件-->
+    <script src="https://js.arcgis.com/4.23"></script>
+    <!--导入官方的js文件-->
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <!--导入jquery官方js文件-->
+
+    <script>
+        require([
+            "esri/layers/FeatureLayer",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/widgets/Compass",//指南针
+            "esri/widgets/ScaleBar",//比例尺
+            "esri/widgets/Measurement",//测量用具
+            "esri/widgets/Legend",//图例
+            "esri/widgets/Popup",//设置弹出窗口
+            "esri/PopupTemplate",
+            "esri/rest/support/Query",//查询功能
+            "esri/tasks/QueryTask",
+            "dojo/dom",
+            "dojo/on",
+            "dojo/domReady",
+        ],
+            function (FeatureLayer, Map, MapView, Compass, ScaleBar, Measurement,
+                Legend, Popup, PopupTemplate, Query, QueryTask, dom, on, domReady) {
+                //导入图层
+                const layer0 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/0"
+                })
+                const layer1 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/1"
+                })
+                const layer2 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                })
+                const layer3 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/3",
+                });
+
+                //设置底图为satellite
+                const mymap = new Map({
+                    basemap: "satellite",
+                });
+
+                //featurelayer添加到当前底图
+                mymap.add(layer2);
+
+                //设置mapview
+                const view = new MapView({
+                    map: mymap,
+                    container: "viewDiv",
+                    zoom: 13, // 缩放级别
+                    center: [117.175, 30.497],
+                    popup: {
+                        defaultPopupTemplateEnabled: true,
+                    }
+                });
+
+                //创建相关小组件
+                var default_compass = new Compass({
+                    view: view,
+                });
+                var default_scale = new ScaleBar({
+                    view: view,
+                    unit: "metric",//设置公制
+                });
+                var legend = new Legend({
+                    view: view,
+                    layerInfos: [
+                        {
+                            layer: layer2,//图例使用layer2
+                            title: "南木村土地图例"
+                        }
+                    ],
+                    visible: true,//可以设置图例是否可见的属性
+                });
+
+                //设置图例按钮的可见于否
+                jQuery(function () {
+                    jQuery('#hidelegend').click(function () {
+                        if (legend.visible == true) {
+                            legend.visible = false
+                        } else {
+                            legend.visible = true
+                        }
+                    })
+                })
+
+                //把上面的三种文件添加到view视图中
+                view.ui.add(default_compass, "top-left")
+                view.ui.add(default_scale, {
+                    position: "bottom-right"
+                });
+                view.ui.add(legend, "bottom-left");
+
+                //创建三个测量功能按键
+                const $distancebutton = jQuery('#distance')
+                const $areabutton = jQuery('#area')
+                const $clearbutton = jQuery('#clear')
+
+                //用jquery设置点击distance按钮运行下面的函数
+                jQuery(function () {
+                    jQuery('#distance').click(function () {
+                        alert('距离测量按钮被点击')
+                        if ($distancebutton != null) {
+                            alert('距离测量按钮被定位')
+                        }
+                        //jquery获取到的对象转化为dom对象
+                        const distancebutton = $distancebutton[0]
+                        //设置按钮要做的内容
+                        const measurement_distance = new Measurement({
+                            view: view,
+                            activeTool: "distance",
+                        });
+                        measurement_distance.activeTool = 'distance'
+                        distancebutton.classList.add('activate')
+                    })
+                });
+
+                //用jquery设置点击area按钮运行下面的函数
+                jQuery(function () {
+                    jQuery('#area').click(function () {
+                        alert('面积测量按钮被点击')
+                        if ($areabutton != null) {
+                            alert('面积测量按钮被定位')
+                        }
+                        //转化为dom对象
+                        const areabutton = $areabutton[0]
+                        //设置按钮动作
+                        const measurement_area = new Measurement({
+                            view: view,
+                            activeTool: "area",
+                        })
+                        measurement_area.activeTool = 'area'
+                        areabutton.classList.add('activate')
+                    })
+                });
+
+                //设置删除按钮功能
+                jQuery(function () {
+                    jQuery('#clear').click(function () {
+                        alert('清除按钮被点击')
+                        if ($clearbutton != null) {
+                            alert('清除按钮被定位')
+                        }
+                        //用刷新当前页面作为删除选项
+                        window.location.reload();
+                    });
+
+                });
+
+
+                //查询功能可以控制台可实现版本
+                /* const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                var queryTask = new QueryTask({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                })
+                var query = new Query();
+                query.returnGeometry = true;
+                query.outFields = ["*"];
+                
+                query.where = "DLMC = '河流水面'";
+                
+                queryTask.execute(query).then(
+                    //getResults
+                    function (results) {
+                    console.log(results.features);
+                });
+
+                function getResults(response){
+                     feature.popupTemplate = popupTemplate;
+                     return feature;
+                }
+                
+                queryTask.executeForCount(query).then(function (results) {
+                    console.log(results);
+                    return;
+                }); */
+
+
+                //查询功能版本1
+                /* const pointresults = response.features.map(function (feature) { 
+                        feature.symbol = {
+                            type:"simple-marker",
+                            style:"square",
+                            color:[225,120,40],
+                            size:"10px"
+                        }
+                     }); */
+
+                /* const $searchbutton = jQuery('#doButton')
+                jQuery(function () {
+                    jQuery('#doButton').click(function () {
+                        alert('查询按钮被点击');
+                        if ($searchbutton != null) {
+                            alert('查询按钮被定位')
+                        }
+                        const searchtext = jQuery('#search-content').val()
+                        const sqlsearchtext = "DLMC = " + searchtext
+                        console.log("查询内容是" + searchtext)
+                        console.log('sql查询语句是' + sqlsearchtext)
+
+                        const query = new Query();
+                        const querylayerurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                        const querytask = new QueryTask({
+                            url: querylayerurl,
+                        })
+                        const params = new Query({
+                            returnGeometry:true,
+                            outFields:["*"]
+                        })
+
+                        params.where = sqlsearchtext
+                        querytask.execute(params)
+                            .then(getresults)
+                            .otherwise(PromiseRejected)
+                        
+                        function getresults(response){ 
+                            console.log(result.features);
+                         }
+
+                        function PromiseRejected(err){
+                            console.log("promise rejected:");
+                        }
+                    })
+                }) */
+
+                //查询功能版本2
+                const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                const popuptemplate = {
+                    title: "{DLMC}"
+                }
+                const qtask = new QueryTask({
+                    url: searchurl
+                })
+                const params = new Query({
+                    returnGeometry: true,
+                    outFields: ["*"]
+                })
+
+                const searchstart = dom.byId("search-content")
+
+                function doQuery() {
+                    params.where = searchstart.value
+                    qtask.execute(params)
+                        .then(function (results) {
+                            console.log("success");
+                            console.log(results.features);
+                        }, function (error) {
+                            console.log("error");
+
+                        });
+                    //.otherwise(promisrejected)
+                }
+
+
+
+                on(dom.byId("doButton"), "click", doQuery)
+
+            })
+
+
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv">
+    </div>
+    <div id="toolbarDiv" class="esri-component esri-widget">
+        <button id="distancebutton" class="esri-widget--button esri-interactive esri-icon-measure-line"
+            title="距离测量工具"></button>
+        <button id="areabutton" class="esri-widget--button esri-interactive esri-icon-measure-area"
+            title="面积测量工具"></button>
+        <button id="clearbutton" class="esri-widget--button esri-interactive esri-icon-trash" title="清除当前测量"></button>
+        <button id="searchbutton" class="esri-widget--button esri-interactive esri-icon-search" title="查询功能"></button>
+        <button id="hidelegend" class="esri-widget--button esri-interactive esri-icon-right" title="查询功能"></button>
+    </div>
+    <div id="optionsDiv">
+        <h2>search</h2>
+        <input type="text" id="search-content">
+        <br>
+        <br>
+        <button id="doButton">search</button>
+        <br>
+        <p><span id="printResults"></span></p>
+    </div>
+</body>
+
+</html>

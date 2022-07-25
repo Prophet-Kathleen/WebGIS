@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>基础功能实现</title>
+
+    <style>
+        html,
+        body,
+        #viewDiv {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #toolbarDiv {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            cursor: default;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+
+        #SearchDiv {
+            background-color: dimgray;
+            color: white;
+            padding: 10px;
+            width: 350px;
+        }
+
+        .esri-widget--button.active,
+        .esri-widget--button.active:hover,
+        .esri-widget--button.active:focus {
+            cursor: default;
+            background-color: #999696;
+        }
+
+        .esri-widget--button.active path,
+        .esri-widget--button.active:hover path,
+        .esri-widget--button.active:focus path {
+            fill: #E4E4E4;
+        }
+    </style>
+
+    <link rel="stylesheet"
+        href="https://s3-us-west-1.amazonaws.com/patterns.esri.com/files/calcite-web/1.2.5/css/calcite-web.min.css">
+    <link rel="stylesheet" href="https://js.arcgis.com/4.24/esri/themes/dark/main.css" />
+    <!--导入官方css文件-->
+    <script src="https://js.arcgis.com/4.23"></script>
+    <!--导入官方的js文件-->
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <!--导入jquery官方js文件-->
+
+    <script>
+        require([
+            "esri/layers/FeatureLayer",
+            "esri/Map",
+            "esri/views/MapView",
+            "esri/widgets/Compass",//指南针
+            "esri/widgets/ScaleBar",//比例尺
+            "esri/widgets/Measurement",//测量用具
+            "esri/widgets/Legend",//图例
+            "esri/widgets/Popup",//设置弹出窗口
+            "esri/PopupTemplate",
+            "esri/rest/support/Query",//查询功能
+            "esri/rest/query",
+            "esri/tasks/QueryTask",
+            "esri/layers/GraphicsLayer",
+            "dojo/dom",
+            "dojo/on",
+            "dojo/domReady",
+            "esri/symbols/SimpleLineSymbol",
+            "esri/symbols/SimpleFillSymbol",
+            "esri/widgets/Sketch",
+            "esri/Color"
+        ],
+            function (FeatureLayer, Map, MapView, Compass, ScaleBar, Measurement,
+                Legend, Popup, PopupTemplate, Query, query, QueryTask, GraphicsLayer, dom, on, domReady,
+                SimpleFillSymbol, SimpleLineSymbol, Sketch,Color) {
+                //导入图层
+                var layer0 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/0"
+                })
+                var layer1 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/1"
+                })
+                var layer2 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                })
+                var layer3 = new FeatureLayer({
+                    url: "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/3",
+                });
+
+                //设置底图为satellite
+                var mymap = new Map({
+                    basemap: "satellite",
+                });
+
+                //featurelayer添加到当前底图
+                mymap.add(layer2);
+
+                //设置mapview
+                var view = new MapView({
+                    map: mymap,
+                    container: "viewDiv",
+                    zoom: 13, // 缩放级别
+                    center: [117.195, 30.5],
+                    popup: {
+                        defaultPopupTemplateEnabled: true,
+                        dockEnabled: true,
+                        dockOptions: {
+                            position: "bottom-left",
+                            breakpoint: false
+                        }
+                    }
+                });
+
+                //创建相关小组件
+                var default_compass = new Compass({
+                    view: view,
+                });
+                var default_scale = new ScaleBar({
+                    view: view,
+                    unit: "metric",//设置公制
+                });
+                var legend = new Legend({
+                    view: view,
+                    layerInfos: [
+                        {
+                            layer: layer2,//图例使用layer2
+                            title: "南木村土地图例"
+                        }
+                    ],
+                    visible: true,//可以设置图例是否可见的属性
+                });
+
+                //设置图例按钮的可见于否
+                jQuery(function () {
+                    jQuery('#hidelegend').click(function () {
+                        if (legend.visible == true) {
+                            legend.visible = false
+                        } else {
+                            legend.visible = true
+                        }
+                    })
+                })
+
+                //设置搜索按钮是否可见
+
+
+                //把上面的三种文件添加到view视图中
+                view.ui.add(default_compass, "top-left")
+                view.ui.add(default_scale, {
+                    position: "bottom-right"
+                });
+                view.ui.add(legend, "top-right");
+
+                //创建三个测量功能按键
+                var $distancebutton = jQuery('#distancebutton')
+                var $areabutton = jQuery('#areabutton')
+                var $clearbutton = jQuery('#clearbutton')
+
+                //用jquery设置点击distance按钮运行下面的函数
+                jQuery(function () {
+                    jQuery('#distancebutton').click(function () {
+                        alert('距离测量按钮被点击')
+                        if ($distancebutton != null) {
+                            alert('距离测量按钮被定位')
+                        }
+                        //jquery获取到的对象转化为dom对象
+                        var distancebutton = $distancebutton[0]
+                        //设置按钮要做的内容
+                        var measurement_distance = new Measurement({
+                            view: view,
+                            activeTool: "distance",
+                        });
+                        measurement_distance.activeTool = 'distance'
+                        distancebutton.classList.add('activate')
+                    })
+                });
+
+                //用jquery设置点击area按钮运行下面的函数
+                jQuery(function () {
+                    jQuery('#areabutton').click(function () {
+                        alert('面积测量按钮被点击')
+                        if ($areabutton != null) {
+                            alert('面积测量按钮被定位')
+                        }
+                        //转化为dom对象
+                        var areabutton = $areabutton[0]
+                        //设置按钮动作
+                        var measurement_area = new Measurement({
+                            view: view,
+                            activeTool: "area",
+                        })
+                        measurement_area.activeTool = 'area'
+                        areabutton.classList.add('activate')
+                    })
+                });
+
+                //设置删除按钮功能
+                jQuery(function () {
+                    jQuery('#clearbutton').click(function () {
+                        alert('清除按钮被点击')
+                        if ($clearbutton != null) {
+                            alert('清除按钮被定位')
+                        }
+                        //用刷新当前页面作为删除选项
+                        window.location.reload();
+                    });
+
+                });
+
+                //属性查询
+                /* var searchlayerurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                var popuptemplate = {
+                    title: "{DLMC},{area}"
+                }
+                const mtnSymbol = {
+                    type: "point", // autocasts as new PointSymbol3D()
+                    symbolLayers: [
+                        {
+                            type: "object", // autocasts as new ObjectSymbol3DLayer()
+                            resource: {
+                                primitive: "cone"
+                            }
+                        }
+                    ]
+                };
+                const resultsLayer = new GraphicsLayer();
+                const params = new Query({
+                    returnGeometry: true,
+                    outFields: ["*"]
+                });
+
+                view.when(function () {
+                    view.ui.add("SearchDiv", "bottom-left");
+                    document.getElementById("doButton").addEventListener("click", doQuery);
+                });
+
+                const searchname = document.getElementById("search-content")
+                
+                function doQuery() {
+                    //resultsLayer.removeALL();
+                    params.where = "DMLC = 乔木林地"
+                    qtask.execute(params)
+                        .then(getResults)
+                        .catch(promiseRejected);
+                }
+
+                function getResults(response) {
+                    const searchResult = response.features.map(function (feature) {
+                        feature.symbol = {
+                            type: "point",
+                            symbolLayers: [{
+                                type: "object", // autocasts as new ObjectSymbol3DLayer()
+                                material: {
+                                    color: "green"
+                                },
+                                resource: {
+                                    primitive: "cone"
+                                },
+                            }]
+                        };
+                        feature.popupTemplate = popupTemplate;
+                        return feature;
+                    })
+
+                    resultsLayer.addMany(searchResult)
+
+                    view
+                        .goTo(searchResult)
+                        .then(function () {
+                            view.popup.open({
+                                features: searchResult,
+                                featureMenuOpen: true,
+                                updateLocationEnabled: true
+                            });
+                        })
+                        .catch(function (error) {
+                            if (error.name != "AbortError") {
+                                console.error(error);
+                            }
+                        });
+                }
+                
+                function promiseRejected(error) {
+                    console.error("Promise rejected: ", error.message);
+                } */
+
+
+                //属性查询功能(正常返回）
+                const searchurl = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                const popuptemplate = {
+                    title: "{DLMC},{area}"
+                }
+                const qtask = new QueryTask({
+                    url: searchurl
+                })
+                const params = new Query({
+                    returnGeometry: true,
+                    outFields: ["*"]
+                })
+                const resultsLayer = new GraphicsLayer();
+                const searchstart = dom.byId("search-content")
+
+                view.when(function () {
+                    view.ui.add("SearchDiv", "bottom-left");
+                    document.getElementById("doButton").addEventListener("click", doQuery);
+                });
+
+                function doQuery() {
+                    params.where = searchstart.value
+                    qtask.execute(params)
+                        .then(function (results) {
+                            console.log("查询成功");
+                            console.log(results.features);
+                            const searchResult = results.features.map(function (feature) {
+                                feature.symbol = {
+                                    type: "text",
+                                    symbolLayers: [{
+                                        type: "object", // autocasts as new ObjectSymbol3DLayer()
+                                        material: {
+                                            color: "green"
+                                        },
+                                        resource: {
+                                            primitive: "cone"
+                                        },
+                                    }]
+                                };
+                                feature.popupTemplate = popuptemplate;
+
+                                for (var i = 0; i < results.features.length; i++) {
+                                    var graphic = results.features[i];
+                                    //给图形赋予符号	
+
+                                    //graphic.setSymbol(fill);  //api3.×
+                                    graphic.symbol = "simple-marker";		//api 4.x				
+                                    //添加到地图从而实现高亮效果						
+                                    view.graphics.addMany(graphic);	//api 4.x
+                                }
+                                return feature;
+                            })
+
+                            resultsLayer.add(searchResult)
+
+                            view
+                                .goTo(searchResult)
+                                .then(function () {
+                                    view.popup.open({
+                                        features: searchResult,
+                                        featureMenuOpen: true,
+                                        updateLocationEnabled: true
+                                    });
+                                })
+                                .catch(function (error) {
+                                    if (error.name != "AbortError") {
+                                        console.error(error);
+                                    }
+                                });
+                        }, function (error) {
+                            console.log("error");
+
+                        });
+                    //.otherwise(promisrejected)
+                }
+                on(dom.byId("doButton"), "click", doQuery)
+
+
+                //空间查询
+                const kongjianlayer = new GraphicsLayer();
+                const sketch = new Sketch({
+                    layer: kongjianlayer,
+                    view: view,
+                    creationMode: "update",
+                })
+                view.ui.add(sketch, "top-left")
+                //小组件添加监听事件，坚挺他完成的时候
+                sketch.on("create", function (event) {
+                    if (event.state === "complete") {
+                        console.log(event),
+                            //使用graphic.geometry 去查询相交特征
+                            //console.log(event.graphic.geometry);
+
+                            //使用geometry（QueryTask）
+                            queryTask(event.graphic.geometry);
+                    }
+                });
+
+                function queryTask(geometry) {
+                    console.log(geometry)
+                    var url2 = "http://101.35.130.194:6080/arcgis/rest/services/nanmucun/MapServer/2"
+                    var qTask = new QueryTask({
+                        url: url2,
+                    });
+                    var query = new Query({
+                        returnGeometry: true,
+                        outFields: ["*"]//结果要素包含的属性字段
+                    });
+                    query.geometry = geometry;
+                    console.log(query.geometry);
+                    //空间参考信息
+                    query.outSpatialReference = mymap.spatialReference;
+                    //查询的标准，此处代表和geometry相交的图形都要返回
+                    query.spatialRelationship = Query.SPATIAL_REL_INTERSECTS;
+                    //执行空间查询
+                    qTask.execute(query).then(showQueryResult);
+                }
+
+                function showQueryResult(queryResult) {
+                    //console.log(queryResult)
+                    //创建线符号					
+                    var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_DASH, new Color([0, 255, 0, 0.5]));
+                    //创建面符号
+                    var fill = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new Color([0, 255, 0]));
+                    if (queryResult.features.length == 0) {
+                        dom.byId("divShowResult").innerHTML = "查询结果为空！";
+                        return;
+                    };
+                    var htmls = "";
+                    if (queryResult.features.length >= 1) {
+                        htmls = htmls + "<table style=\"width: 900px\">"; //创建一个表，使用了转义字符
+                        htmls = htmls + "<tr><td>名称</td></tr>"; //创建数据行
+                        for (var i = 0; i < queryResult.features.length; i++) {
+                            //得到graphic	
+                            var graphic = queryResult.features[i];
+                            //给图形赋予符号	
+
+                            //graphic.setSymbol(fill);  //api3.×
+                            graphic.symbol = fill;		//api 4.x				
+                            //添加到地图从而实现高亮效果						
+                            view.graphics.add(graphic);	//api 4.x
+
+                            //map.graphics.add(graphic); //api3.×
+
+                            //获得名称信息，此处应和shp的属性表对应						
+                            var ptName = graphic.attributes["DLMC"];
+                            ptName += graphic.attributes["area"];
+                            htmls = htmls + "<td><a href=\"#\">" + ptName + "</a></td>";
+                            htmls = htmls + "</tr>";
+                        }
+                        htmls = htmls + "</table>";
+                        dom.byId("divShowResult").innerHTML = htmls;
+                    }
+                }
+            })
+
+
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv">
+    </div>
+    <div id="toolbarDiv" class="esri-component esri-widget">
+        <button id="distancebutton" class="esri-widget--button esri-interactive esri-icon-measure-line"
+            title="距离测量工具"></button>
+        <button id="areabutton" class="esri-widget--button esri-interactive esri-icon-measure-area"
+            title="面积测量工具"></button>
+        <button id="clearbutton" class="esri-widget--button esri-interactive esri-icon-trash" title="清除当前测量"></button>
+        <button id="searchbutton" class="esri-widget--button esri-interactive esri-icon-search" title="查询功能"></button>
+        <button id="hidelegend" class="esri-widget--button esri-interactive esri-icon-right" title="查询功能"></button>
+    </div>
+    <div id="SearchDiv">
+        <h2>search</h2>
+        <input type="text" id="search-content">
+        <br>
+        <button id="doButton" class="btn">search</button>
+        <br>
+    </div>
+    <div id="divShowResult">
+
+    </div>
+</body>
+
+</html>

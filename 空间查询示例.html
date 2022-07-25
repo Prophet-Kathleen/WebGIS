@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>空间查询</title>
+
+    <!-- <link rel="stylesheet" href="https://js.arcgis.com/4.16/esri/themes/light/main.css" />
+		<script src="https://js.arcgis.com/4.16/"></script> -->
+    <link rel="stylesheet" type="text/css" href="https://10.10.10.104/4.15/esri/themes/light/main.css" />
+    <script src="https://10.10.10.104/4.15/init.js"></script>
+    <script src="jquery-1.7.2/jquery.min.js"></script>
+
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+    <script>
+        require([
+            "esri/widgets/Sketch",
+            "esri/Map",
+            "esri/layers/GraphicsLayer",
+            "esri/views/MapView",
+            "esri/Basemap",
+            "esri/layers/FeatureLayer",
+            "esri/views/draw/Draw",
+            "esri/Graphic",
+            "esri/tasks/IdentifyTask",
+            "esri/tasks/support/IdentifyParameters",
+            "esri/tasks/QueryTask",
+            "esri/tasks/support/Query",
+            "esri/symbols/SimpleLineSymbol",
+            "esri/symbols/SimpleFillSymbol",
+            "dojo/dom",
+            "dojo/on",
+            "esri/Color"
+        ], function (Sketch, Map, GraphicsLayer, MapView, Basemap, FeatureLayer,
+            Draw, Graphic, IdentifyTask, IdentifyParameters, QueryTask, Query, SimpleLineSymbol, SimpleFillSymbol, dom, on, Color) {
+            //实例化一个图形图层
+            const layer = new GraphicsLayer();
+
+            //创建全国矢量图层（feature）
+            var countrylayer = new FeatureLayer({
+                url: "https://xqwportal.arcgis.cn/arcgis/rest/services/Hosted/%E5%85%A8%E5%9B%BD%E7%9F%A2%E9%87%8F1/FeatureServer",
+                visible: true,
+                outFields: ["*"],
+            });
+
+            //创建地图对象
+            const map = new Map({
+                basemap: 'osm',
+                layers: [countrylayer, layer]
+            });
+            //渲染二维地图
+            const view = new MapView({
+                container: "viewDiv",
+                map: map,
+                zoom: 6,
+                center: [108, 33]
+            });
+            //绘图小部件
+            const sketch = new Sketch({
+                layer: layer,
+                view: view,
+                // graphic will be selected as soon as it is created
+                creationMode: "update"
+            });
+            //向视图中添加绘图小部件
+            view.ui.add(sketch, "top-right");
+            //给视图小部件添加监听事件，监听它完成的时候
+            sketch.on("create", function (event) {
+                if (event.state === "complete") {
+                    //console.log(event);
+
+                    //使用graphic.geometry 去查询相交特征
+                    //console.log(event.graphic.geometry);
+
+                    //使用geometry（QueryTask）
+                    queryTask(event.graphic.geometry);
+                }
+            });
+
+            //空间查询（QueryTask）
+            function queryTask(geometry) {
+                // console.log(geometry);
+                var china =
+                    "https://xqwportal.arcgis.cn/arcgis/rest/services/Hosted/%E5%85%A8%E5%9B%BD%E7%9F%A2%E9%87%8F1/FeatureServer/0";
+                var qTask = new QueryTask({
+                    url: china //全国矢量
+                });
+                var query = new Query({
+                    returnGeometry: true,
+                    outFields: ["*"],//结果要素包含的属性字段  
+                });
+                query.geometry = geometry;
+                //console.log(query.geometry);
+                //空间参考信息
+                query.outSpatialReference = map.spatialReference;
+                //查询的标准，此处代表和geometry相交的图形都要返回
+                query.spatialRelationship = Query.SPATIAL_REL_INTERSECTS;
+                //执行空间查询
+                qTask.execute(query).then(showQueryResult);
+            }
+            //执行查询
+            function showQueryResult(queryResult) {
+                //console.log(queryResult)
+                //创建线符号					
+                var lineSymbol = new SimpleLineSymbol(SimpleLineSymbol.STYLE_DASH, new Color([0, 255, 0, 0.5]));
+                //创建面符号
+                var fill = new SimpleFillSymbol(SimpleFillSymbol.STYLE_SOLID, new Color([0, 255, 0]));
+                if (queryResult.features.length == 0) {
+                    dom.byId("divShowResult").innerHTML = "查询结果为空！";
+                    return;
+                };
+                var htmls = "";
+                if (queryResult.features.length >= 1) {
+                    htmls = htmls + "<table style=\"width: 900px\">"; //创建一个表，使用了转义字符
+                    htmls = htmls + "<tr><td>名称</td></tr>"; //创建数据行
+                    for (var i = 0; i < queryResult.features.length; i++) {
+                        //得到graphic	
+                        var graphic = queryResult.features[i];
+                        //给图形赋予符号	
+
+                        //graphic.setSymbol(fill);  //api3.×
+                        graphic.symbol = fill;		//api 4.x				
+                        //添加到地图从而实现高亮效果						
+                        view.graphics.add(graphic);	//api 4.x
+
+                        //map.graphics.add(graphic); //api3.×
+
+                        //获得名称信息，此处应和shp的属性表对应						
+                        var ptName = graphic.attributes["nl_name_1"];
+                        ptName += graphic.attributes["nl_name_2"];
+                        htmls = htmls + "<td><a href=\"#\">" + ptName + "</a></td>";
+                        htmls = htmls + "</tr>";
+                    }
+                    htmls = htmls + "</table>";
+                    dom.byId("divShowResult").innerHTML = htmls;
+                }
+            }
+        });
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+    <div id="divShowResult"></div>
+</body>
+
+</html>
