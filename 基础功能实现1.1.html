@@ -323,8 +323,8 @@
                             console.log(results.features);
                             const searchResult = results.features.map(function (feature) {
                                 feature.symbol = {
-                                    type: "text",
-                                    symbolLayers: [{
+                                    type: "simple-fill",
+                                    /* symbolLayers: [{
                                         type: "object", // autocasts as new ObjectSymbol3DLayer()
                                         material: {
                                             color: "green"
@@ -332,7 +332,7 @@
                                         resource: {
                                             primitive: "cone"
                                         },
-                                    }]
+                                    }] */
                                 };
                                 feature.popupTemplate = popuptemplate;
 
@@ -341,7 +341,7 @@
                                     //给图形赋予符号	
 
                                     //graphic.setSymbol(fill);  //api3.×
-                                    graphic.symbol = "simple-marker";		//api 4.x				
+                                    graphic.symbol = "simple-fill";		//api 4.x				
                                     //添加到地图从而实现高亮效果						
                                     view.graphics.addMany(graphic);	//api 4.x
                                 }
